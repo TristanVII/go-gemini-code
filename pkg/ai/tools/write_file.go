@@ -1,9 +1,10 @@
 package tools
 
 import (
-	"bufio"
 	"os"
 
+	"bufio"
+	"gemini-cli/pkg/utils"
 	"google.golang.org/genai"
 )
 
@@ -28,38 +29,34 @@ func createWriteFileSchema() *genai.FunctionDeclaration {
 }
 
 func WriteFileHandler(args map[string]any) string {
-	fp, ok := args["absolute_file_path"]
-	if !ok {
-		return "Args did not contain absolute_file_path"
-	}
-	filePath, ok := fp.(string)
-	if !ok {
-		return "absolute_file_path is not string"
+	fp, err := utils.GetArg[string](args, "absolute_file_path")
+	if err != nil {
+		return err.Error()
 	}
 
-	content, ok := args["content"]
-	if !ok {
-		return "Args did not contain content"
+	content, err := utils.GetArg[string](args, "content")
+	if err != nil {
+		return err.Error()
 	}
 
-	contents, ok := content.(string)
-	if !ok {
-		return "absolute_file_path is not string"
-	}
-
-	file, err := os.Open(filePath)
+	file, err := os.OpenFile(fp, 0x1, 0644)
 	if err != nil {
 		return "Error reading file. Are you sure that is the correct FULL ABSOLUTE PATH?"
 	}
-	defer file.Close()
 
 	w := bufio.NewWriter(file)
-	_, err = w.WriteString(contents)
+	_, err = w.WriteString(content)
 	if err != nil {
 		return "Error writing to file"
 	}
+	err = w.Flush()
+	if err != nil {
+		return err.Error()
+	}
 
-	return "Succesfully written to file " + filePath
+	file.Close()
+
+	return "Succesfully wrote to file " + fp
 }
 
 // func ReadFileTool() *ServerTool {

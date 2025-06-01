@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"gemini-cli/pkg/utils"
 	"google.golang.org/genai"
 )
 
@@ -28,16 +29,11 @@ func createReadFileSchema() *genai.FunctionDeclaration {
 }
 
 func ReadFileHandler(args map[string]any) string {
-	fp, ok := args["absolute_file_path"]
-	if !ok {
-		return "Args did not contail absolute_file_path"
+	fp, err := utils.GetArg[string](args, "absolute_file_path")
+	if err != nil {
+		return err.Error()
 	}
-	filePath, ok := fp.(string)
-	if !ok {
-		return "absolute_file_path is not string"
-	}
-
-	content, err := os.ReadFile(filePath)
+	content, err := os.ReadFile(fp)
 	if err != nil {
 		return fmt.Sprintf("Error reading file: %v", err)
 	}
