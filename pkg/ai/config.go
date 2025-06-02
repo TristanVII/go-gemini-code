@@ -1,13 +1,21 @@
 package ai
 
+import "google.golang.org/genai"
+
 type GeminiConfig struct {
 	APIKey string
-	// Backend is the GenAI backend to use for the client.
-	Backend int
-	Model   string
+	Model  string
 }
 
-// Add tools later
-func (p *GeminiConfig) createCachedConfig() {
+func (c *GeminiConfig) CreateGenerateContentConfig(cachedContentName string) *genai.GenerateContentConfig {
+
+	budget := int32(4096)
+	temperature := float32(0.2)
+
+	return &genai.GenerateContentConfig{
+		Temperature:    &temperature,
+		CachedContent:  cachedContentName,
+		ThinkingConfig: &genai.ThinkingConfig{IncludeThoughts: true, ThinkingBudget: &budget},
+	}
 
 }
