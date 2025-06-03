@@ -15,11 +15,10 @@ type AIClient struct {
 }
 
 // TODO: Add tools
-func (client *AIClient) createCacheContent() error {
+func (client *AIClient) createCacheContentConfig() error {
+	// Default TTL 1hour
 	cfg := &genai.CreateCachedContentConfig{
-		TTL:               3600,
-		DisplayName:       "geminicode_cache",
-		SystemInstruction: CachedSystemPrompt(),
+		SystemInstruction: genai.NewContentFromText(SYSTEM_PROMPT, genai.RoleUser),
 	}
 
 	cachedContent, err := client.C.Caches.Create(client.Ctx, client.Conf.Model, cfg)
@@ -34,7 +33,7 @@ func (client *AIClient) Generate(textContent string) (*genai.GenerateContentResp
 	var generateConfig *genai.GenerateContentConfig
 
 	if client.cachedContent == nil {
-		err := client.createCacheContent()
+		err := client.createCacheContentConfig()
 		if err != nil {
 			panic(err)
 		}
@@ -42,14 +41,7 @@ func (client *AIClient) Generate(textContent string) (*genai.GenerateContentResp
 	fmt.Println(client.cachedContent.Name)
 	generateConfig = client.Conf.CreateGenerateContentConfig(client.cachedContent.Name)
 
-	content := &genai.Content{
-		Parts: []*genai.Part{
-			genai.NewPartFromText(textContent),
-		},
-		Role: "model",
-	}
-
-	result, err := client.C.Models.GenerateContent(client.Ctx, client.Conf.Model, []*genai.Content{content}, generateConfig)
+	result, err := client.C.Models.GenerateContent(client.Ctx, client.Conf.Model, genai.Text(textContent), generateConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -75,3 +67,4 @@ func CreateClient(ctx context.Context, conf *GeminiConfig) (*AIClient, error) {
 	return aiClient, nil
 
 }
+
