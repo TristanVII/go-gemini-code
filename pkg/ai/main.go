@@ -22,7 +22,7 @@ func (client *AIClient) createCacheContent() error {
 		SystemInstruction: CachedSystemPrompt(),
 	}
 
-	cachedContent, err := client.C.Caches.Create(client.Ctx, "models/"+client.Conf.Model, cfg)
+	cachedContent, err := client.C.Caches.Create(client.Ctx, client.Conf.Model, cfg)
 	if err != nil {
 		return err
 	}
@@ -30,8 +30,7 @@ func (client *AIClient) createCacheContent() error {
 	return nil
 }
 
-func (client *AIClient) Generate(content []*genai.Content) (*genai.GenerateContentResponse, error) {
-	// Use the cached content if available
+func (client *AIClient) Generate(textContent string) (*genai.GenerateContentResponse, error) {
 	var generateConfig *genai.GenerateContentConfig
 
 	if client.cachedContent == nil {
@@ -40,9 +39,17 @@ func (client *AIClient) Generate(content []*genai.Content) (*genai.GenerateConte
 			panic(err)
 		}
 	}
+	fmt.Println(client.cachedContent.Name)
 	generateConfig = client.Conf.CreateGenerateContentConfig(client.cachedContent.Name)
 
-	result, err := client.C.Models.GenerateContent(client.Ctx, client.Conf.Model, content, generateConfig)
+	content := &genai.Content{
+		Parts: []*genai.Part{
+			genai.NewPartFromText(textContent),
+		},
+		Role: "model",
+	}
+
+	result, err := client.C.Models.GenerateContent(client.Ctx, client.Conf.Model, []*genai.Content{content}, generateConfig)
 	if err != nil {
 		return nil, err
 	}
