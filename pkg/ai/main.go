@@ -45,6 +45,24 @@ func (client *AIClient) Generate(textContent string) (*genai.GenerateContentResp
 	if err != nil {
 		return nil, err
 	}
+
+	var thinking = false
+	for _, part := range result.Candidates[0].Content.Parts {
+		if part.Thought {
+			thinking = true
+		} else {
+			thinking = false
+		}
+		// text part
+		if part.Text != "" {
+			prefix := ""
+			if !thinking {
+				prefix = "Thinking: "
+			}
+			fmt.Printf("%s: %s\n", prefix, part.Text)
+		}
+
+	}
 	return result, nil
 }
 
@@ -67,4 +85,3 @@ func CreateClient(ctx context.Context, conf *GeminiConfig) (*AIClient, error) {
 	return aiClient, nil
 
 }
-
